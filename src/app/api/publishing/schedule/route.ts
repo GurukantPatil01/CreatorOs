@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { campaignId, generatedContentId, platform, content, scheduledAt, accountId } = body
+    const { campaignId, generatedContentId, platform, content, scheduledAt, accountId, blueskyHandle, blueskyPassword } = body
 
     if (!campaignId || !platform || !content) {
       return NextResponse.json(
@@ -27,11 +27,13 @@ export async function POST(req: Request) {
       scheduledAt: scheduledAt || new Date().toISOString(),
       accountId,
       userId,
+      blueskyHandle,
+      blueskyPassword,
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Post scheduled successfully through Postiz',
+      message: 'Post published / scheduled successfully',
       data: result,
     })
   } catch (error: unknown) {

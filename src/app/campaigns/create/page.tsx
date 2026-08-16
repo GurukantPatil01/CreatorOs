@@ -30,6 +30,8 @@ export default function CreateCampaignPage() {
   const [isScheduling, setIsScheduling] = useState(false)
   const [scheduleResult, setScheduleResult] = useState<any>(null)
   const [schedulingError, setSchedulingError] = useState<string | null>(null)
+  const [bskyHandle, setBskyHandle] = useState('')
+  const [bskyPassword, setBskyPassword] = useState('')
 
   // Step 1: Upload handler
   const handleUploadSubmit = async (fileToUpload?: File | null, topicText?: string) => {
@@ -138,6 +140,8 @@ export default function CreateCampaignPage() {
           platform: approvedPost.platform,
           content: fullText,
           scheduledAt: new Date(Date.now() + 86400000).toISOString(),
+          blueskyHandle: bskyHandle,
+          blueskyPassword: bskyPassword,
         }),
       })
 
@@ -359,12 +363,12 @@ export default function CreateCampaignPage() {
         />
       )}
 
-      {/* Step 5: Schedule Screen (Postiz API Integration) */}
+      {/* Step 5: Schedule Screen (Postiz & Live Social Integration) */}
       {currentStep === 'schedule' && (
         <div className="creator-card p-8 space-y-6 bg-white">
           <div className="flex items-center justify-between border-b-3 border-black pb-4">
             <div className="space-y-1">
-              <h2 className="text-sm font-black text-black uppercase">5. SCHEDULE CAMPAIGN VIA POSTIZ</h2>
+              <h2 className="text-sm font-black text-black uppercase">5. PUBLISH / SCHEDULE CAMPAIGN</h2>
               <p className="text-xs font-bold text-black">Approved Platform: <span className="uppercase font-black text-black bg-[#FFDE59] px-1 border border-black">{approvedPost?.platform || 'Bluesky'}</span></p>
             </div>
             <span className="creator-badge creator-badge-success">CONTENT APPROVED</span>
@@ -385,11 +389,37 @@ export default function CreateCampaignPage() {
 
           {!scheduleResult ? (
             <div className="space-y-4">
-              <div className="p-4 border-3 border-black bg-[#F4F4F0] shadow-[4px_4px_0px_0px_#000] space-y-2">
-                <p className="text-xs font-mono font-black uppercase text-black">TARGET PLATFORM & INTEGRATION</p>
+              <div className="p-4 border-3 border-black bg-[#F4F4F0] shadow-[4px_4px_0px_0px_#000] space-y-3">
+                <div className="flex items-center justify-between border-b-2 border-black pb-2">
+                  <p className="text-xs font-mono font-black uppercase text-black">TARGET PLATFORM & INTEGRATION</p>
+                  <span className="text-[10px] font-mono font-black bg-[#00E5FF] px-1.5 py-0.5 border border-black">LIVE POSTIZ ENGINE</span>
+                </div>
                 <p className="text-sm text-black font-black uppercase">☑ {approvedPost?.platform || 'Bluesky'}</p>
-                <p className="text-[11px] font-bold text-black">Publishing Provider: Postiz API</p>
               </div>
+
+              {/* Direct Bluesky Live Credentials (Optional for Instant Live Post) */}
+              {(approvedPost?.platform?.toLowerCase() === 'bluesky' || !approvedPost?.platform) && (
+                <div className="p-4 border-3 border-black bg-[#FFDE59] shadow-[4px_4px_0px_0px_#000] space-y-3">
+                  <p className="text-xs font-mono font-black uppercase text-black">⚡ PUBLISH DIRECT LIVE TO BLUESKY (OPTIONAL)</p>
+                  <p className="text-[11px] font-bold text-black">Enter your Bluesky Handle & App Password below to post a <b>REAL LIVE POST</b> to Bluesky immediately, or click Schedule to queue via Postiz.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={bskyHandle}
+                      onChange={(e) => setBskyHandle(e.target.value)}
+                      placeholder="yourhandle.bsky.social"
+                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
+                    />
+                    <input
+                      type="password"
+                      value={bskyPassword}
+                      onChange={(e) => setBskyPassword(e.target.value)}
+                      placeholder="Bluesky App Password"
+                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -398,24 +428,39 @@ export default function CreateCampaignPage() {
                   className="creator-button-primary text-xs"
                 >
                   {isScheduling ? <Loader2 className="w-4 h-4 animate-spin stroke-[3]" /> : <Send className="w-4 h-4 stroke-[3]" />}
-                  <span>{isScheduling ? 'SCHEDULING...' : 'SCHEDULE CAMPAIGN'}</span>
+                  <span>{isScheduling ? 'PUBLISHING LIVE...' : bskyHandle && bskyPassword ? 'PUBLISH LIVE TO BLUESKY' : 'SCHEDULE CAMPAIGN'}</span>
                 </button>
               </div>
             </div>
           ) : (
-            /* Postiz Schedule Confirmation UI */
+            /* Postiz & Live Schedule Confirmation UI */
             <div className="p-6 border-3 border-black bg-[#A3E635] shadow-[6px_6px_0px_0px_#000] space-y-4 text-center">
               <div className="w-14 h-14 border-3 border-black bg-white text-black flex items-center justify-center mx-auto shadow-[3px_3px_0px_0px_#000]">
                 <Check className="w-7 h-7 stroke-[3]" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-black text-black uppercase">CAMPAIGN SCHEDULED SUCCESSFULLY!</h3>
+                <h3 className="text-base font-black text-black uppercase">CAMPAIGN PUBLISHED SUCCESSFULLY!</h3>
                 <p className="text-xs text-black font-mono font-black">
-                  ✓ Content approved &nbsp;•&nbsp; ✓ Post created &nbsp;•&nbsp; ✓ Scheduled through Postiz
+                  ✓ Content approved &nbsp;•&nbsp; ✓ Post created &nbsp;•&nbsp; ✓ Dispatched to social network
                 </p>
               </div>
-              <div className="p-3 border-2 border-black bg-white inline-block text-xs font-mono font-black text-black shadow-[2px_2px_0px_0px_#000]">
-                Postiz Post ID: {scheduleResult.postizPostId || scheduleResult.externalPostId}
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <div className="p-3 border-2 border-black bg-white inline-block text-xs font-mono font-black text-black shadow-[2px_2px_0px_0px_#000]">
+                  Post ID: {scheduleResult.postizPostId || scheduleResult.externalPostId}
+                </div>
+
+                {scheduleResult.publishedUrl && (
+                  <a
+                    href={scheduleResult.publishedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="creator-button-primary text-xs py-2 px-4 shadow-[3px_3px_0px_0px_#000]"
+                  >
+                    <span>VIEW LIVE PUBLIC POST</span>
+                    <Send className="w-4 h-4 stroke-[3]" />
+                  </a>
+                )}
               </div>
             </div>
           )}
