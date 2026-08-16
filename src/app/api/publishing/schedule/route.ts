@@ -5,7 +5,21 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { campaignId, generatedContentId, platform, content, scheduledAt, accountId, blueskyHandle, blueskyPassword } = body
+    const {
+      campaignId,
+      generatedContentId,
+      platform,
+      content,
+      scheduledAt,
+      accountId,
+      blueskyHandle,
+      blueskyPassword,
+      linkedinToken,
+      linkedinUrn,
+      instagramAccountId,
+      instagramToken,
+      imageUrl,
+    } = body
 
     if (!campaignId || !platform || !content) {
       return NextResponse.json(
@@ -29,6 +43,11 @@ export async function POST(req: Request) {
       userId,
       blueskyHandle,
       blueskyPassword,
+      linkedinToken,
+      linkedinUrn,
+      instagramAccountId,
+      instagramToken,
+      imageUrl,
     })
 
     return NextResponse.json({
