@@ -20,6 +20,8 @@ export default function LoginPage() {
     setErrorMsg(null)
     setSuccessMsg(null)
 
+    // Clear demo mode when performing explicit Sign In / Sign Up
+    document.cookie = 'creatoros_demo=; path=/; max-age=0'
     const supabase = createClient()
 
     try {
@@ -46,36 +48,16 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = () => {
     setLoading(true)
     setErrorMsg(null)
-
-    // Demo authentication session
-    const supabase = createClient()
-    try {
-      const demoEmail = 'creator.demo@creatoros.dev'
-      const demoPassword = 'CreatorOSDemo2026!'
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email: demoEmail,
-        password: demoPassword,
-      })
-
-      if (error) {
-        // Fallback demo signup
-        await supabase.auth.signUp({
-          email: demoEmail,
-          password: demoPassword,
-        })
-      }
-    } catch (err) {
-      console.warn('Demo session initialized:', err)
-    } finally {
-      document.cookie = 'creatoros_session=active; path=/'
+    // Set explicit demo mode cookie
+    document.cookie = 'creatoros_demo=true; path=/'
+    setTimeout(() => {
       setLoading(false)
       router.push('/dashboard')
       router.refresh()
-    }
+    }, 400)
   }
 
   return (
@@ -86,7 +68,7 @@ export default function LoginPage() {
             <Sparkles className="w-6 h-6 stroke-[3]" />
           </div>
           <h1 className="text-2xl font-black text-black uppercase font-mono tracking-tight">SUPABASE AUTHENTICATION</h1>
-          <p className="text-xs font-bold text-black uppercase">Sign in or create an account with Supabase Auth</p>
+          <p className="text-xs font-bold text-black uppercase">Sign in or create an account to access CreatorOS</p>
         </div>
 
         {/* Tab switcher */}

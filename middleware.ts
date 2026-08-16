@@ -27,8 +27,25 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh Supabase auth session
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isDemo = request.cookies.get('creatoros_demo')?.value === 'true'
+
+  const pathname = request.nextUrl.pathname
+  const isProtectedRoute = [
+    '/dashboard',
+    '/campaigns',
+    '/calendar',
+    '/analytics',
+    '/insights',
+    '/settings',
+  ].some((route) => pathname.startsWith(route))
+
+  // If attempting to access protected route without Supabase user OR Demo cookie, redirect to /login
+  if (isProtectedRoute && !user && !isDemo) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   return supabaseResponse
 }

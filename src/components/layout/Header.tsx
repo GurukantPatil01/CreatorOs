@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Radio, LogOut, User as UserIcon } from 'lucide-react'
+import { Plus, Radio, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 
@@ -11,31 +11,40 @@ export function Header() {
   const pathname = usePathname()
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
+  const [isDemo, setIsDemo] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
-
-    // Get current authenticated user
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const checkAuthAndDemo = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      const hasDemoCookie = document.cookie.includes('creatoros_demo=true')
+      setIsDemo(hasDemoCookie)
       setLoading(false)
-    })
+    }
 
-    // Listen for auth state changes
+    checkAuthAndDemo()
+
+    const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setIsDemo(document.cookie.includes('creatoros_demo=true'))
       setLoading(false)
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [pathname])
 
   const handleSignOut = async () => {
+    // Clear demo cookie and Supabase session
+    document.cookie = 'creatoros_demo=; path=/; max-age=0'
     const supabase = createClient()
     await supabase.auth.signOut()
     setUser(null)
+    setIsDemo(false)
     router.push('/login')
+    router.refresh()
   }
 
   const getTitle = () => {
@@ -46,7 +55,7 @@ export function Header() {
     if (pathname.startsWith('/analytics')) return 'ANALYTICS'
     if (pathname.startsWith('/insights')) return 'AI STRATEGY INSIGHTS'
     if (pathname.startsWith('/settings')) return 'SETTINGS & CONNECTIONS'
-    if (pathname.startsWith('/login')) return 'SUPABASE AUTHENTICATION'
+    if (pathname.startsWith('/login')) return 'AUTHENTICATION'
     return 'CREATOROS'
   }
 
@@ -78,12 +87,24 @@ export function Header() {
               <LogOut className="w-3.5 h-3.5 stroke-[3]" />
             </button>
           </div>
+        ) : !loading && isDemo ? (
+          <div className="flex items-center gap-2 border-2 border-black bg-[#00E5FF] p-1 shadow-[2px_2px_0px_0px_#000]">
+            <ShieldCheck className="w-4 h-4 stroke-[3] text-black" />
+            <span className="text-xs font-mono font-black uppercase pr-1 hidden sm:inline">DEMO MODE</span>
+            <button
+              onClick={handleSignOut}
+              title="Exit Demo / Sign In"
+              className="px-1.5 py-0.5 text-[10px] font-mono font-black border border-black bg-white text-black hover:bg-black hover:text-white transition-colors uppercase"
+            >
+              SIGN IN
+            </button>
+          </div>
         ) : (
           <Link
             href="/login"
             className="flex items-center gap-2 p-1.5 border-2 border-black bg-[#FFDE59] text-xs font-black font-mono uppercase shadow-[2px_2px_0px_0px_#000] hover:-translate-x-0.5 transition-transform"
           >
-            <span>SIGN IN WITH SUPABASE</span>
+            <span>SIGN IN</span>
           </Link>
         )}
 
