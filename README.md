@@ -95,7 +95,7 @@ CreatorOS bridges AI content extraction directly with automated social publishin
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/creator-os.git
+git clone https://github.com/GurukantPatil01/CreatorOs.git
 cd creator-os
 npm install
 ```
