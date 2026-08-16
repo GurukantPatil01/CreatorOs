@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Radio } from 'lucide-react'
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
+import { useUser, UserButton, SignInButton } from '@clerk/nextjs'
 
 export function Header() {
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
+  const { isSignedIn, isLoaded, user } = useUser()
 
   useEffect(() => {
     setMounted(true)
@@ -38,23 +39,21 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3">
-        {mounted ? (
-          <>
-            <SignedIn>
-              <div className="flex items-center gap-2 border-2 border-black bg-[#FFDE59] p-1 shadow-[2px_2px_0px_0px_#000]">
-                <UserButton />
-                <span className="text-xs font-mono font-black uppercase pr-1 hidden sm:inline">MY ACCOUNT</span>
-              </div>
-            </SignedIn>
-
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="flex items-center gap-2 p-1.5 border-2 border-black bg-[#FFDE59] shadow-[2px_2px_0px_0px_#000] text-xs font-black hover:-translate-x-0.5 font-mono uppercase">
-                  <span>SIGN IN WITH CLERK</span>
-                </button>
-              </SignInButton>
-            </SignedOut>
-          </>
+        {mounted && isLoaded ? (
+          isSignedIn ? (
+            <div className="flex items-center gap-2 border-2 border-black bg-[#FFDE59] p-1 shadow-[2px_2px_0px_0px_#000]">
+              <UserButton />
+              <span className="text-xs font-mono font-black uppercase pr-1 hidden sm:inline">
+                {user?.firstName || 'MY ACCOUNT'}
+              </span>
+            </div>
+          ) : (
+            <SignInButton mode="modal">
+              <button className="flex items-center gap-2 p-1.5 border-2 border-black bg-[#FFDE59] shadow-[2px_2px_0px_0px_#000] text-xs font-black hover:-translate-x-0.5 font-mono uppercase">
+                <span>SIGN IN WITH CLERK</span>
+              </button>
+            </SignInButton>
+          )
         ) : (
           <Link
             href="/login"
