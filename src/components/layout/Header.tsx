@@ -1,11 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Bell, Radio } from 'lucide-react'
+import { Plus, Radio } from 'lucide-react'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 
 export function Header() {
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const getTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'OVERVIEW'
@@ -31,15 +38,31 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Link
-          href="/login"
-          className="flex items-center gap-2 p-1 border-2 border-black bg-[#FFDE59] shadow-[2px_2px_0px_0px_#000] text-xs font-black hover:-translate-x-0.5"
-        >
-          <div className="w-5 h-5 bg-black text-[#FFDE59] font-black flex items-center justify-center text-[10px]">
-            CD
-          </div>
-          <span className="hidden sm:inline font-mono uppercase">Creator Demo</span>
-        </Link>
+        {mounted ? (
+          <>
+            <SignedIn>
+              <div className="flex items-center gap-2 border-2 border-black bg-[#FFDE59] p-1 shadow-[2px_2px_0px_0px_#000]">
+                <UserButton />
+                <span className="text-xs font-mono font-black uppercase pr-1 hidden sm:inline">MY ACCOUNT</span>
+              </div>
+            </SignedIn>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="flex items-center gap-2 p-1.5 border-2 border-black bg-[#FFDE59] shadow-[2px_2px_0px_0px_#000] text-xs font-black hover:-translate-x-0.5 font-mono uppercase">
+                  <span>SIGN IN WITH CLERK</span>
+                </button>
+              </SignInButton>
+            </SignedOut>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center gap-2 p-1 border-2 border-black bg-[#FFDE59] text-xs font-black font-mono uppercase shadow-[2px_2px_0px_0px_#000]"
+          >
+            <span>SIGN IN</span>
+          </Link>
+        )}
 
         <Link
           href="/campaigns/create"
@@ -52,5 +75,3 @@ export function Header() {
     </header>
   )
 }
-
-
