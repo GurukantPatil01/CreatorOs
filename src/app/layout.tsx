@@ -18,22 +18,18 @@ export const metadata: Metadata = {
   description: 'Turn one video into multi-platform social media campaigns with AI analysis, Postiz publishing, and real-time workflow tracking.',
 }
 
-import { ClerkProvider } from '@clerk/nextjs'
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F4F4F0] text-black`}
-        >
-          <AppShell>{children}</AppShell>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F4F4F0] text-black`}
+      >
+        <AppShell>{children}</AppShell>
+      </body>
+    </html>
   )
 }

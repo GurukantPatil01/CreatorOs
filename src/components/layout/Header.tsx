@@ -1,19 +1,42 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Radio } from 'lucide-react'
-import { useUser, UserButton, SignInButton } from '@clerk/nextjs'
+import { Plus, Radio, LogOut, User as UserIcon } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { User } from '@supabase/supabase-js'
 
 export function Header() {
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
-  const { isSignedIn, isLoaded, user } = useUser()
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setMounted(true)
+    const supabase = createClient()
+
+    // Get current authenticated user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setLoading(false)
+    })
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setUser(null)
+    router.push('/login')
+  }
 
   const getTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'OVERVIEW'
@@ -23,7 +46,7 @@ export function Header() {
     if (pathname.startsWith('/analytics')) return 'ANALYTICS'
     if (pathname.startsWith('/insights')) return 'AI STRATEGY INSIGHTS'
     if (pathname.startsWith('/settings')) return 'SETTINGS & CONNECTIONS'
-    if (pathname.startsWith('/login')) return 'AUTHENTICATION'
+    if (pathname.startsWith('/login')) return 'SUPABASE AUTHENTICATION'
     return 'CREATOROS'
   }
 
@@ -39,27 +62,28 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3">
-        {mounted && isLoaded ? (
-          isSignedIn ? (
-            <div className="flex items-center gap-2 border-2 border-black bg-[#FFDE59] p-1 shadow-[2px_2px_0px_0px_#000]">
-              <UserButton />
-              <span className="text-xs font-mono font-black uppercase pr-1 hidden sm:inline">
-                {user?.firstName || 'MY ACCOUNT'}
-              </span>
+        {!loading && user ? (
+          <div className="flex items-center gap-2 border-2 border-black bg-[#FFDE59] p-1 shadow-[2px_2px_0px_0px_#000]">
+            <div className="w-6 h-6 border border-black bg-black text-white flex items-center justify-center text-[10px] font-black">
+              <UserIcon className="w-3.5 h-3.5 text-[#FFDE59]" />
             </div>
-          ) : (
-            <SignInButton mode="modal">
-              <button className="flex items-center gap-2 p-1.5 border-2 border-black bg-[#FFDE59] shadow-[2px_2px_0px_0px_#000] text-xs font-black hover:-translate-x-0.5 font-mono uppercase">
-                <span>SIGN IN WITH CLERK</span>
-              </button>
-            </SignInButton>
-          )
+            <span className="text-xs font-mono font-black uppercase max-w-[120px] truncate hidden sm:inline">
+              {user.email?.split('@')[0] || 'CREATOR'}
+            </span>
+            <button
+              onClick={handleSignOut}
+              title="Sign Out"
+              className="p-1 border border-black bg-white text-black hover:bg-[#FF5757] hover:text-white transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5 stroke-[3]" />
+            </button>
+          </div>
         ) : (
           <Link
             href="/login"
-            className="flex items-center gap-2 p-1 border-2 border-black bg-[#FFDE59] text-xs font-black font-mono uppercase shadow-[2px_2px_0px_0px_#000]"
+            className="flex items-center gap-2 p-1.5 border-2 border-black bg-[#FFDE59] text-xs font-black font-mono uppercase shadow-[2px_2px_0px_0px_#000] hover:-translate-x-0.5 transition-transform"
           >
-            <span>SIGN IN</span>
+            <span>SIGN IN WITH SUPABASE</span>
           </Link>
         )}
 
