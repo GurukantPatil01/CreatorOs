@@ -8,21 +8,25 @@ export interface ExtendedCampaign extends Campaign {
   generatedPosts?: any
 }
 
-// Global server singleton store
+export interface ExtendedScheduledPost extends ScheduledPost {
+  user_id?: string | null
+}
+
+// Global server singleton store with multi-account isolation
 class CampaignStore {
   private static instance: CampaignStore
   private campaigns: Map<string, ExtendedCampaign> = new Map()
-  private scheduledPosts: Map<string, ScheduledPost> = new Map()
+  private scheduledPosts: Map<string, ExtendedScheduledPost> = new Map()
   private workflowNodes: Map<string, WorkflowNode[]> = new Map() // campaignId -> nodes
 
   private constructor() {
-    // Seed default demo campaign if none present
+    // Seed default demo campaign for demo user
     const defaultCampId = 'cmp_demo'
     const now = new Date().toISOString()
     
     this.campaigns.set(defaultCampId, {
       id: defaultCampId,
-      user_id: null,
+      user_id: 'demo_user',
       name: '5 mistakes every content creator makes in 2026',
       source_type: 'video',
       source_url: 'https://assets.creatoros.dev/demo-video.mp4',
@@ -45,6 +49,7 @@ class CampaignStore {
     this.scheduledPosts.set('sp_demo', {
       id: 'sp_demo',
       campaign_id: defaultCampId,
+      user_id: 'demo_user',
       generated_content_id: null,
       platform: 'bluesky',
       account_id: 'int_bluesky_01',
@@ -65,40 +70,50 @@ class CampaignStore {
     return globalThis._creatorOsStore
   }
 
-  // Save or update campaign
+  // Save or update campaign scoped to user
   public async addCampaign(campaign: ExtendedCampaign): Promise<void> {
     this.campaigns.set(campaign.id, campaign)
 
-    // Try Supabase insert
     try {
       const supabase = createAdminClient()
       await supabase.from('campaigns').upsert({
         id: campaign.id,
+        user_id: campaign.user_id || null,
         name: campaign.name,
         source_type: campaign.source_type,
         source_url: campaign.source_url,
         status: campaign.status,
       })
     } catch (e) {
-      // Supabase table fallback
+      // Supabase fallback
     }
   }
 
-  // Get all campaigns
-  public async getCampaigns(): Promise<ExtendedCampaign[]> {
+  // Get campaigns scoped per user account
+  public async getCampaigns(userId?: string | null): Promise<ExtendedCampaign[]> {
     try {
       const supabase = createAdminClient()
-      const { data, error } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false })
+      let query = supabase.from('campaigns').select('*').order('created_at', { ascending: false })
+      if (userId && userId !== 'demo_user') {
+        query = query.eq('user_id', userId)
+      }
+      const { data, error } = await query
       if (!error && data && data.length > 0) {
         return data as ExtendedCampaign[]
       }
     } catch (e) {
-      // Fallback to in-memory
+      // Fallback
     }
-    return Array.from(this.campaigns.values()).reverse()
+
+    const all = Array.from(this.campaigns.values()).reverse()
+    if (userId) {
+      const userCampaigns = all.filter((c) => c.user_id === userId)
+      return userCampaigns.length > 0 ? userCampaigns : (userId === 'demo_user' ? all : [])
+    }
+    return all
   }
 
-  // Get campaign by ID
+  // Get single campaign
   public async getCampaign(id: string): Promise<ExtendedCampaign | null> {
     return this.campaigns.get(id) || null
   }
@@ -112,10 +127,9 @@ class CampaignStore {
     return this.workflowNodes.get(campaignId) || this.workflowNodes.get('cmp_demo') || []
   }
 
-  // Scheduled Posts
-  public addScheduledPost(post: ScheduledPost): void {
+  // Scheduled Posts scoped per user
+  public addScheduledPost(post: ExtendedScheduledPost): void {
     this.scheduledPosts.set(post.id, post)
-    // Update campaign status
     const camp = this.campaigns.get(post.campaign_id)
     if (camp) {
       camp.status = 'scheduled'
@@ -123,8 +137,13 @@ class CampaignStore {
     }
   }
 
-  public getScheduledPosts(): ScheduledPost[] {
-    return Array.from(this.scheduledPosts.values())
+  public getScheduledPosts(userId?: string | null): ExtendedScheduledPost[] {
+    const all = Array.from(this.scheduledPosts.values())
+    if (userId) {
+      const userPosts = all.filter((p) => p.user_id === userId)
+      return userPosts.length > 0 ? userPosts : (userId === 'demo_user' ? all : [])
+    }
+    return all
   }
 }
 

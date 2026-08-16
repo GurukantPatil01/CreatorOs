@@ -13,15 +13,17 @@ export interface CampaignUploadResult {
 
 export class UploadService {
   /**
-   * Upload video file or initialize topic campaign
+   * Upload video file or initialize topic campaign scoped to userId
    */
   async createCampaignFromUpload(
     file?: File | Blob | null,
     fileName?: string,
-    topicText?: string
+    topicText?: string,
+    userId?: string | null
   ): Promise<CampaignUploadResult> {
     const campaignId = `cmp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
     const workflowRunId = `wf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    const ownerId = userId || 'demo_user'
 
     let sourceType: 'video' | 'topic' = 'video'
     let sourceUrl = 'https://assets.creatoros.dev/demo-video.mp4'
@@ -35,7 +37,6 @@ export class UploadService {
 
       try {
         const supabase = createAdminClient()
-        // Attempt upload to Supabase Storage bucket 'campaign-videos'
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
@@ -74,10 +75,10 @@ export class UploadService {
       { id: `node_7_${campaignId}`, workflow_run_id: workflowRunId, node_type: 'publish', status: 'pending', started_at: null, completed_at: null, error: null, metadata: {} },
     ]
 
-    // Save to central store
+    // Save to central store scoped per user
     await store.addCampaign({
       id: campaignId,
-      user_id: null,
+      user_id: ownerId,
       name: campaignName,
       source_type: sourceType,
       source_url: sourceUrl,
@@ -94,6 +95,7 @@ export class UploadService {
       // 1. Insert Campaign
       await supabase.from('campaigns').insert({
         id: campaignId,
+        user_id: ownerId !== 'demo_user' ? ownerId : null,
         name: campaignName,
         source_type: sourceType,
         source_url: sourceUrl,

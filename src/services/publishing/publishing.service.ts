@@ -10,6 +10,7 @@ export interface SchedulePostRequest {
   content: string
   scheduledAt: string // ISO date string
   accountId?: string
+  userId?: string | null
 }
 
 export class PublishingService {
@@ -59,6 +60,7 @@ export class PublishingService {
     ) || accounts[0]
 
     const accountId = req.accountId || targetAccount?.id || 'int_bluesky_01'
+    const ownerId = req.userId || 'demo_user'
 
     // 2. Schedule via PostizProvider with resilient fallback
     let postResult: PostResult
@@ -83,12 +85,13 @@ export class PublishingService {
       }
     }
 
-    // 3. Persist record in central store & Supabase database
+    // 3. Persist record in central store & Supabase database scoped to user
     let scheduledPostId = `sp_${Date.now()}`
     
     store.addScheduledPost({
       id: scheduledPostId,
       campaign_id: req.campaignId,
+      user_id: ownerId,
       generated_content_id: req.generatedContentId || null,
       platform: req.platform,
       account_id: accountId,
@@ -107,6 +110,7 @@ export class PublishingService {
         .from('scheduled_posts')
         .insert({
           campaign_id: req.campaignId,
+          user_id: ownerId !== 'demo_user' ? ownerId : null,
           generated_content_id: req.generatedContentId || null,
           platform: req.platform,
           account_id: accountId,

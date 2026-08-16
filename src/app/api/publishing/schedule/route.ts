@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { PublishingService } from '@/services/publishing/publishing.service'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,10 @@ export async function POST(req: Request) {
       )
     }
 
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id || 'demo_user'
+
     const service = new PublishingService()
     const result = await service.schedulePost({
       campaignId,
@@ -21,6 +26,7 @@ export async function POST(req: Request) {
       content,
       scheduledAt: scheduledAt || new Date().toISOString(),
       accountId,
+      userId,
     })
 
     return NextResponse.json({
