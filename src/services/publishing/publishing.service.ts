@@ -79,7 +79,9 @@ export class PublishingService {
     publishedUrl?: string
   }> {
     const ownerId = req.userId || 'demo_user'
-    const savedCreds = store.getUserCredentials(ownerId)
+    const savedCreds = (store && typeof store.getUserCredentials === 'function')
+      ? store.getUserCredentials(ownerId)
+      : null
     let postResult: PostResult | null = null
 
     const platformLower = req.platform.toLowerCase()

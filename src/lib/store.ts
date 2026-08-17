@@ -75,7 +75,7 @@ class CampaignStore {
   }
 
   public static getInstance(): CampaignStore {
-    if (!globalThis._creatorOsStore) {
+    if (!globalThis._creatorOsStore || typeof globalThis._creatorOsStore.getUserCredentials !== 'function') {
       globalThis._creatorOsStore = new CampaignStore()
     }
     return globalThis._creatorOsStore
@@ -83,11 +83,17 @@ class CampaignStore {
 
   // User Social Credentials
   public setUserCredentials(creds: UserSocialCredentials): void {
+    if (!this.userCredentials) {
+      this.userCredentials = new Map()
+    }
     const existing = this.userCredentials.get(creds.userId) || { userId: creds.userId }
     this.userCredentials.set(creds.userId, { ...existing, ...creds })
   }
 
   public getUserCredentials(userId: string): UserSocialCredentials | null {
+    if (!this.userCredentials) {
+      this.userCredentials = new Map()
+    }
     return this.userCredentials.get(userId) || null
   }
 
