@@ -21,12 +21,21 @@ export default function CalendarPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Days for August 2026 week view
+  const daysOfWeek = [
+    { label: 'MON 17', dateNum: 17 },
+    { label: 'TUE 18', dateNum: 18 },
+    { label: 'WED 19', dateNum: 19 },
+    { label: 'THU 20', dateNum: 20 },
+    { label: 'FRI 21', dateNum: 21 },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-black pb-4">
         <div>
           <h1 className="text-2xl font-black text-black uppercase tracking-tight font-mono">SCHEDULED CALENDAR</h1>
-          <p className="text-xs text-black font-bold">View upcoming posts queued for Postiz publishing.</p>
+          <p className="text-xs text-black font-bold">View upcoming and published posts on their exact scheduled date.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000]">
@@ -49,13 +58,19 @@ export default function CalendarPage() {
 
       {/* Neo-Brutalist Week View Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-        {['Mon 17', 'Tue 18', 'Wed 19', 'Thu 20', 'Fri 21'].map((day, idx) => {
-          const postsForDay = scheduledPosts.filter((_, postIdx) => postIdx % 5 === idx)
+        {daysOfWeek.map(({ label, dateNum }) => {
+          // Filter posts matching the exact date number of scheduled_at
+          const postsForDay = scheduledPosts.filter((post) => {
+            if (!post.scheduled_at) return false
+            const d = new Date(post.scheduled_at)
+            return d.getDate() === dateNum
+          })
+
           return (
-            <div key={day} className="creator-card p-4 min-h-[240px] flex flex-col justify-between bg-white">
+            <div key={label} className="creator-card p-4 min-h-[260px] flex flex-col justify-between bg-white">
               <div>
                 <p className="text-xs font-mono font-black text-black border-b-2 border-black pb-2 mb-3 uppercase">
-                  {day}
+                  {label}
                 </p>
                 {loading ? (
                   <div className="flex justify-center pt-8 text-black">
@@ -86,13 +101,11 @@ export default function CalendarPage() {
         <div className="w-12 h-12 border-2 border-black bg-white text-black flex items-center justify-center mx-auto shadow-[2px_2px_0px_0px_#000]">
           <CalendarIcon className="w-6 h-6 stroke-[3]" />
         </div>
-        <h3 className="text-sm font-black text-black uppercase">YOUR UPCOMING SCHEDULED POSTS WILL APPEAR HERE</h3>
+        <h3 className="text-sm font-black text-black uppercase">REAL-TIME WORKFLOW CALENDAR</h3>
         <p className="text-xs font-bold text-black max-w-xl mx-auto">
-          Schedule content through the campaign review stepper to populate your workflow calendar across Instagram, LinkedIn, and Bluesky.
+          Posts appear on the exact date and time they are published or scheduled across Instagram, LinkedIn, and Bluesky.
         </p>
       </div>
     </div>
   )
 }
-
-

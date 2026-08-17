@@ -67,7 +67,7 @@ class CampaignStore {
       publishing_provider: 'postiz',
       external_post_id: 'postiz_demo_01',
       postiz_post_id: 'postiz_demo_01',
-      scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+      scheduled_at: now,
       status: 'scheduled',
       published_url: 'https://bsky.app/profile/creator.bsky.social/post/postiz_demo_01',
       created_at: now,
