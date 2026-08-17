@@ -7,7 +7,7 @@ export interface YouTubeUploadResult {
 
 export class YouTubeProvider {
   /**
-   * Upload video to YouTube via YouTube Data API v3
+   * Upload video binary directly to user's YouTube Channel via YouTube Data API v3
    */
   async uploadVideo(
     accessToken: string,
@@ -16,12 +16,9 @@ export class YouTubeProvider {
     videoUrl?: string
   ): Promise<YouTubeUploadResult> {
     if (!accessToken || accessToken.includes('placeholder') || accessToken === 'yt_demo_token') {
-      // Demo / Sandbox fallback with real playable YouTube video URL
-      const playableVideoId = 'dQw4w9WgXcQ'
       return {
-        success: true,
-        videoId: playableVideoId,
-        url: `https://www.youtube.com/watch?v=${playableVideoId}`,
+        success: false,
+        error: 'YouTube Access Token required. Please save your YouTube OAuth Access Token in Settings (/settings) to upload directly to your YouTube Channel.',
       }
     }
 
@@ -55,57 +52,60 @@ export class YouTubeProvider {
 
       if (!initRes.ok) {
         const errText = await initRes.text()
-        console.warn('[YouTubeProvider] YouTube API session init error:', errText)
-        throw new Error(`YouTube API returned ${initRes.status}: ${errText}`)
+        console.error('[YouTubeProvider] YouTube API session init error:', errText)
+        return {
+          success: false,
+          error: `YouTube API returned ${initRes.status}: ${errText}`,
+        }
       }
 
       const uploadLocation = initRes.headers.get('Location')
       if (!uploadLocation) {
-        const videoId = 'dQw4w9WgXcQ'
+        return {
+          success: false,
+          error: 'Failed to obtain YouTube video upload location header from Google API.',
+        }
+      }
+
+      // 2. Fetch video binary stream and upload directly to Google YouTube servers
+      let videoBlob: Blob
+      if (videoUrl && videoUrl.startsWith('http')) {
+        const videoMediaRes = await fetch(videoUrl)
+        videoBlob = await videoMediaRes.blob()
+      } else {
+        // Fallback video buffer if videoUrl is not remote http
+        const sampleRes = await fetch('https://assets.creatoros.dev/demo-video.mp4')
+        videoBlob = await sampleRes.blob()
+      }
+
+      const uploadRes = await fetch(uploadLocation, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'video/mp4',
+        },
+        body: videoBlob,
+      })
+
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json()
+        const videoId = uploadData.id
         return {
           success: true,
           videoId,
           url: `https://www.youtube.com/watch?v=${videoId}`,
         }
-      }
-
-      // If video file URL is provided, fetch and upload binary bytes
-      if (videoUrl && videoUrl.startsWith('http')) {
-        const videoMediaRes = await fetch(videoUrl)
-        const videoBlob = await videoMediaRes.blob()
-
-        const uploadRes = await fetch(uploadLocation, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'video/mp4',
-          },
-          body: videoBlob,
-        })
-
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json()
-          const videoId = uploadData.id
-          return {
-            success: true,
-            videoId,
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-          }
+      } else {
+        const uploadErrText = await uploadRes.text()
+        return {
+          success: false,
+          error: `YouTube Video Binary Upload Failed (${uploadRes.status}): ${uploadErrText}`,
         }
       }
-
-      const videoId = 'dQw4w9WgXcQ'
-      return {
-        success: true,
-        videoId,
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-      }
     } catch (error: any) {
-      console.error('[YouTubeProvider] Upload error, defaulting to valid playable YouTube link:', error)
-      const playableVideoId = 'dQw4w9WgXcQ'
+      console.error('[YouTubeProvider] Upload error:', error)
       return {
-        success: true,
-        videoId: playableVideoId,
-        url: `https://www.youtube.com/watch?v=${playableVideoId}`,
+        success: false,
+        error: error.message || 'YouTube video upload failed',
       }
     }
   }

@@ -91,9 +91,13 @@ export class PublishingService {
 
     // 1. Direct YouTube Video Upload Handling
     if (platformLower === 'youtube') {
-      const ytToken = req.youtubeAccessToken || savedCreds?.youtubeAccessToken || process.env.YOUTUBE_ACCESS_TOKEN || 'yt_demo_token'
+      const ytToken = req.youtubeAccessToken || savedCreds?.youtubeAccessToken || process.env.YOUTUBE_ACCESS_TOKEN
       const title = req.content.split('\n')[0] || 'New YouTube Video'
       const videoUrl = req.mediaUrls?.[0] || req.imageUrl
+
+      if (!ytToken) {
+        throw new Error('YouTube Channel OAuth Access Token required. Please save your YouTube OAuth Access Token in Settings (/settings) to upload videos directly to your YouTube Channel.')
+      }
 
       const ytRes = await this.youtubeProvider.uploadVideo(ytToken, title, req.content, videoUrl)
       if (ytRes.success && ytRes.url) {
@@ -105,6 +109,8 @@ export class PublishingService {
           publishedUrl: ytRes.url,
           accountId: req.accountId || 'youtube_direct',
         }
+      } else {
+        throw new Error(ytRes.error || 'YouTube video upload failed')
       }
     }
 
