@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Upload, CheckCircle2, Loader2, ArrowRight, Sparkles, SlidersHorizontal, Calendar, Send, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ReviewContentCard, PlatformPostContent } from '@/components/campaigns/ReviewContentCard'
+import { ThumbnailCreator } from '@/components/campaigns/ThumbnailCreator'
 
 const steps = [
   { id: 'upload', name: 'Upload Video', icon: Upload },
@@ -350,31 +351,36 @@ export default function CreateCampaignPage() {
         </div>
       )}
 
-      {/* Step 4: Review Screen */}
+      {/* Step 4: Review & Design Screen */}
       {(currentStep === 'generate' || currentStep === 'review') && (
-        <ReviewContentCard
-          campaignId={campaignData?.campaignId || 'cmp_demo'}
-          initialContent={generatedPosts || {
-            instagram: {
-              hook: '5 mistakes every creator makes in 2026 🚨',
-              caption: 'Building a social audience isn\'t about working 80 hours a week—it\'s about having an autonomous workflow.',
-              hashtags: ['#creatoros', '#contentcreation'],
-              cta: 'Save this post for later! 📌'
-            },
-            linkedin: {
-              hook: 'The biggest bottleneck for modern content creators isn\'t ideation—it\'s execution velocity.',
-              caption: 'In 2026, top-performing creators aren\'t working longer hours. They turn single videos into multi-platform campaigns automatically.',
-              cta: 'Repost if you found this valuable ♻️'
-            },
-            bluesky: {
-              hook: 'Stop manually retyping your video captions for every social platform.',
-              caption: 'Turn 1 raw video into platform-ready posts for Bluesky, Instagram & LinkedIn in under 10 seconds. Powered by Groq Whisper & Postiz.',
-              cta: 'Try CreatorOS MVP today ⚡️'
-            }
-          }}
-          onApprove={(platform, content) => handleContentApprove(platform, content)}
-          onRegenerate={() => runAiPipeline(campaignData?.campaignId || 'cmp_demo')}
-        />
+        <div className="space-y-6">
+          <ReviewContentCard
+            campaignId={campaignData?.campaignId || 'cmp_demo'}
+            initialContent={generatedPosts || {
+              instagram: {
+                hook: '5 mistakes every creator makes in 2026 🚨',
+                caption: 'Building a social audience isn\'t about working 80 hours a week—it\'s about having an autonomous workflow.',
+                hashtags: ['#creatoros', '#contentcreation'],
+                cta: 'Save this post for later! 📌'
+              },
+              linkedin: {
+                hook: 'The biggest bottleneck for modern content creators isn\'t ideation—it\'s execution velocity.',
+                caption: 'In 2026, top-performing creators aren\'t working longer hours. They turn single videos into multi-platform campaigns automatically.',
+                cta: 'Repost if you found this valuable ♻️'
+              },
+              bluesky: {
+                hook: 'Stop manually retyping your video captions for every social platform.',
+                caption: 'Turn 1 raw video into platform-ready posts for Bluesky, Instagram & LinkedIn in under 10 seconds. Powered by Groq Whisper & Postiz.',
+                cta: 'Try CreatorOS MVP today ⚡️'
+              }
+            }}
+            onApprove={(platform, content) => handleContentApprove(platform, content)}
+            onRegenerate={() => runAiPipeline(campaignData?.campaignId || 'cmp_demo')}
+          />
+          <ThumbnailCreator
+            campaignName={campaignData?.campaignName || topicInput || 'My Content Campaign'}
+          />
+        </div>
       )}
 
       {/* Step 5: Schedule Screen (Postiz & Live Social Integration) */}
