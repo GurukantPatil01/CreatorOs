@@ -197,7 +197,7 @@ export class PublishingService {
     if (!postResult) {
       const mockId = `pub_${platformLower}_${Date.now()}`
       const fallbackUrl = platformLower === 'youtube'
-        ? `https://www.youtube.com/watch?v=${mockId}`
+        ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
         : platformLower === 'linkedin'
         ? `https://www.linkedin.com/feed/update/urn:li:activity:${mockId}`
         : platformLower === 'instagram'
