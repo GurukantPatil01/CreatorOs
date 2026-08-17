@@ -20,6 +20,7 @@ export interface UserSocialCredentials {
   linkedinUrn?: string
   instagramAccountId?: string
   instagramToken?: string
+  youtubeAccessToken?: string
 }
 
 // Global server singleton store with multi-account isolation

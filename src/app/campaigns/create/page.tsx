@@ -372,6 +372,11 @@ export default function CreateCampaignPage() {
                 hook: 'Stop manually retyping your video captions for every social platform.',
                 caption: 'Turn 1 raw video into platform-ready posts for Bluesky, Instagram & LinkedIn in under 10 seconds. Powered by Groq Whisper & Postiz.',
                 cta: 'Try CreatorOS MVP today ⚡️'
+              },
+              youtube: {
+                hook: '5 Mistakes Every Content Creator Makes in 2026 🔴',
+                caption: 'In this video, we break down the exact strategy to turn single videos into multi-platform campaigns automatically.',
+                cta: 'Subscribe to the channel for more creator workflows! 🔔'
               }
             }}
             onApprove={(platform, content) => handleContentApprove(platform, content)}

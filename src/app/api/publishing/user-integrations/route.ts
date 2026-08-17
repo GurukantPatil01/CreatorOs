@@ -26,6 +26,7 @@ export async function GET() {
         linkedinUrn: creds.linkedinUrn || '',
         instagramConnected: !!(creds.instagramAccountId && creds.instagramToken),
         instagramAccountId: creds.instagramAccountId || '',
+        youtubeConnected: !!creds.youtubeAccessToken,
       },
     })
   } catch (error: unknown) {
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { blueskyHandle, blueskyPassword, linkedinToken, linkedinUrn, instagramAccountId, instagramToken } = body
+    const { blueskyHandle, blueskyPassword, linkedinToken, linkedinUrn, instagramAccountId, instagramToken, youtubeAccessToken } = body
 
     store.setUserCredentials({
       userId: user.id,
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
       linkedinUrn: linkedinUrn !== undefined ? linkedinUrn : undefined,
       instagramAccountId: instagramAccountId !== undefined ? instagramAccountId : undefined,
       instagramToken: instagramToken !== undefined ? instagramToken : undefined,
+      youtubeAccessToken: youtubeAccessToken !== undefined ? youtubeAccessToken : undefined,
     })
 
     return NextResponse.json({

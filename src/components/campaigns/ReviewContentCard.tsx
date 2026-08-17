@@ -15,7 +15,7 @@ export interface PlatformPostContent {
 export interface ReviewContentCardProps {
   campaignId: string
   initialContent: any
-  onApprove: (approvedPlatform: 'instagram' | 'linkedin' | 'bluesky', content: PlatformPostContent) => void
+  onApprove: (approvedPlatform: 'instagram' | 'linkedin' | 'bluesky' | 'youtube', content: PlatformPostContent) => void
   onRegenerate: () => void
 }
 
@@ -26,7 +26,7 @@ export function ReviewContentCard({
   onRegenerate,
 }: ReviewContentCardProps) {
   const [activeCategory, setActiveCategory] = useState<'captions' | 'hooks' | 'scripts' | 'carousels' | 'thumbnails'>('captions')
-  const [activePlatform, setActivePlatform] = useState<'bluesky' | 'instagram' | 'linkedin'>('bluesky')
+  const [activePlatform, setActivePlatform] = useState<'bluesky' | 'instagram' | 'linkedin' | 'youtube'>('bluesky')
   const [contentMap, setContentMap] = useState(initialContent)
   const [isEditing, setIsEditing] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
@@ -150,7 +150,7 @@ export function ReviewContentCard({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-xs font-mono font-black uppercase text-black">Target Platform for Scheduling:</span>
             <div className="flex p-1 bg-[#F4F4F0] border-2 border-black shadow-[2px_2px_0px_0px_#000]">
-              {(['bluesky', 'instagram', 'linkedin'] as const).map((platform) => (
+              {(['bluesky', 'instagram', 'linkedin', 'youtube'] as const).map((platform) => (
                 <button
                   key={platform}
                   onClick={() => setActivePlatform(platform)}

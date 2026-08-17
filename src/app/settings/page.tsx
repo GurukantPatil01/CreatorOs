@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [liUrn, setLiUrn] = useState('')
   const [igAccountId, setIgAccountId] = useState('')
   const [igToken, setIgToken] = useState('')
+  const [ytToken, setYtToken] = useState('')
 
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -75,6 +76,7 @@ export default function SettingsPage() {
           linkedinUrn: liUrn,
           instagramAccountId: igAccountId,
           instagramToken: igToken,
+          youtubeAccessToken: ytToken,
         }),
       })
 
@@ -229,6 +231,23 @@ export default function SettingsPage() {
                   value={igToken}
                   onChange={(e) => setIgToken(e.target.value)}
                   placeholder="Graph API Access Token"
+                  className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
+                />
+              </div>
+            </div>
+
+            {/* YouTube Integration Card */}
+            <div className="p-4 border-3 border-black bg-[#FF5757] shadow-[4px_4px_0px_0px_#000] space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-mono font-black uppercase text-black">🔴 YOUTUBE DATA API V3 INTEGRATION</p>
+                {ytToken && <span className="text-[10px] font-mono font-black bg-[#A3E635] text-black px-1.5 py-0.5 border border-black uppercase">CONNECTED</span>}
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <input
+                  type="password"
+                  value={ytToken}
+                  onChange={(e) => setYtToken(e.target.value)}
+                  placeholder="YouTube OAuth2 Access Token (video.upload scope)"
                   className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
                 />
               </div>
