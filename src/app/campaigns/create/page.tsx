@@ -379,6 +379,7 @@ export default function CreateCampaignPage() {
           />
           <ThumbnailCreator
             campaignName={campaignData?.campaignName || topicInput || 'My Content Campaign'}
+            transcript={transcript}
           />
         </div>
       )}

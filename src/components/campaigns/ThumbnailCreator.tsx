@@ -1,78 +1,68 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Sparkles, Image as ImageIcon, Check, RefreshCw, Camera, Upload, Loader2, Monitor, Smartphone } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Sparkles, Image as ImageIcon, Check, RefreshCw, Camera, Upload, Loader2, Monitor, Smartphone, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { generateThumbnailConcepts, ThumbnailConcept } from '@/services/ai/thumbnail'
+import { ThumbnailConcept } from '@/services/ai/thumbnail'
 
 interface ThumbnailCreatorProps {
   campaignName?: string
+  transcript?: string
   sourceUrl?: string
   onAttach?: (thumbnail: ThumbnailConcept) => void
 }
 
-export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: ThumbnailCreatorProps) {
-  const [concepts, setConcepts] = useState<ThumbnailConcept[]>(() => generateThumbnailConcepts(campaignName))
-  const [selectedConcept, setSelectedConcept] = useState<ThumbnailConcept>(concepts[0])
+export function ThumbnailCreator({ campaignName, transcript, sourceUrl, onAttach }: ThumbnailCreatorProps) {
+  const [isAiLoading, setIsAiLoading] = useState(false)
   const [isAttached, setIsAttached] = useState(false)
-  const [isRegenerating, setIsRegenerating] = useState(false)
-  const [isAiGeneratingImage, setIsAiGeneratingImage] = useState(false)
 
   // Customizer state
-  const [title, setTitle] = useState(selectedConcept.title)
-  const [subtitle, setSubtitle] = useState(selectedConcept.subtitle)
-  const [badgeText, setBadgeText] = useState(selectedConcept.badgeText)
-  const [themeColor, setThemeColor] = useState(selectedConcept.themeColor)
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>(selectedConcept.aspectRatio)
-  const [bgImage, setBgImage] = useState<string | undefined>(selectedConcept.backgroundImage)
+  const [title, setTitle] = useState(campaignName ? campaignName.toUpperCase() : 'VIRAL CREATOR MASTERCLASS')
+  const [subtitle, setSubtitle] = useState('REPURPOSE 1 VIDEO INTO 12 MULTI-CHANNEL POSTS')
+  const [badgeText, setBadgeText] = useState('MUST WATCH 🚨')
+  const [themeColor, setThemeColor] = useState('#FFDE59')
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9')
+  const [bgImage, setBgImage] = useState<string | undefined>(undefined)
+  const [aiImagePrompt, setAiImagePrompt] = useState<string | undefined>(undefined)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  const handleSelectConcept = (concept: ThumbnailConcept) => {
-    setSelectedConcept(concept)
-    setTitle(concept.title)
-    setSubtitle(concept.subtitle)
-    setBadgeText(concept.badgeText)
-    setThemeColor(concept.themeColor)
-    setAspectRatio(concept.aspectRatio)
-    if (concept.backgroundImage) setBgImage(concept.backgroundImage)
-  }
+  // Auto-generate Best AI Thumbnail on mount or topic change
+  const fetchBestAiThumbnail = async () => {
+    setIsAiLoading(true)
+    try {
+      const res = await fetch('/api/ai/generate-thumbnail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignName,
+          transcript,
+        }),
+      })
 
-  const handleRegenerate = () => {
-    setIsRegenerating(true)
-    setTimeout(() => {
-      const fresh = generateThumbnailConcepts(campaignName)
-      setConcepts(fresh)
-      setSelectedConcept(fresh[0])
-      setTitle(fresh[0].title)
-      setSubtitle(fresh[0].subtitle)
-      setBadgeText(fresh[0].badgeText)
-      setThemeColor(fresh[0].themeColor)
-      setIsRegenerating(false)
-    }, 400)
-  }
-
-  // 1. AI Generate Background Image via AI Image Engine
-  const handleAiGenerateImage = () => {
-    setIsAiGeneratingImage(true)
-    const promptText = `youtube thumbnail background, high contrast, vibrant colors, cinematic photography, theme of ${campaignName || title || 'content creator'}`
-    const aiImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1280&height=720&nologo=true&seed=${Date.now()}`
-    
-    // Preload image
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.src = aiImageUrl
-    img.onload = () => {
-      setBgImage(aiImageUrl)
-      setIsAiGeneratingImage(false)
-    }
-    img.onerror = () => {
-      setIsAiGeneratingImage(false)
+      const data = await res.json()
+      if (data.success && data.thumbnail) {
+        const t = data.thumbnail
+        if (t.title) setTitle(t.title)
+        if (t.subtitle) setSubtitle(t.subtitle)
+        if (t.badgeText) setBadgeText(t.badgeText)
+        if (t.themeColor) setThemeColor(t.themeColor)
+        if (t.imageUrl) setBgImage(t.imageUrl)
+        if (t.imagePrompt) setAiImagePrompt(t.imagePrompt)
+      }
+    } catch (err) {
+      console.error('Failed to auto-generate AI thumbnail:', err)
+    } finally {
+      setIsAiLoading(false)
     }
   }
 
-  // 2. Extract Video Frame Snapshot
+  useEffect(() => {
+    fetchBestAiThumbnail()
+  }, [campaignName])
+
+  // Extract Video Frame Snapshot
   const handleCaptureVideoSnapshot = () => {
     if (!videoRef.current || !canvasRef.current) return
     const video = videoRef.current
@@ -88,7 +78,7 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
     }
   }
 
-  // 3. Handle File Upload
+  // Handle File Upload
   const handleCustomImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
@@ -106,12 +96,14 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
     setIsAttached(true)
     if (onAttach) {
       onAttach({
-        ...selectedConcept,
+        id: `thumb_${Date.now()}`,
         title,
         subtitle,
         badgeText,
         themeColor,
+        textColor: '#000000',
         aspectRatio,
+        layout: 'bold-header',
         backgroundImage: bgImage,
       })
     }
@@ -135,56 +127,51 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-black pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 stroke-[3] text-black" />
-            <h2 className="text-sm font-black uppercase font-mono text-black">AI THUMBNAIL STUDIO & VIDEO SNAPSHOT</h2>
-            <span className="creator-badge creator-badge-success text-[10px]">NEO-BRUTALIST CANVAS</span>
+            <Wand2 className="w-5 h-5 stroke-[3] text-black" />
+            <h2 className="text-sm font-black uppercase font-mono text-black">AUTOMATED AI THUMBNAIL GENERATOR</h2>
+            <span className="creator-badge creator-badge-success text-[10px]">AI POWERED</span>
           </div>
-          <p className="text-xs font-bold text-black mt-1">Generate AI visual background images, capture video frame snapshots, or style high-CTR text overlays.</p>
+          <p className="text-xs font-bold text-black mt-1">CreatorOS analyzes your video/topic and automatically generates the best high-CTR visual thumbnail & headline.</p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handleRegenerate}
-            disabled={isRegenerating}
-            className="creator-button-secondary text-xs"
+            onClick={fetchBestAiThumbnail}
+            disabled={isAiLoading}
+            className="creator-button-primary text-xs py-2 px-4 shadow-[3px_3px_0px_0px_#000]"
           >
-            <RefreshCw className={cn('w-4 h-4 stroke-[3]', isRegenerating && 'animate-spin')} />
-            <span>Regenerate Concepts</span>
+            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin stroke-[3]" /> : <Sparkles className="w-4 h-4 stroke-[3]" />}
+            <span>{isAiLoading ? 'GENERATING AI THUMBNAIL...' : '⚡ RE-GENERATE BEST AI THUMBNAIL'}</span>
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Controls & AI Image Generators */}
+        {/* Left Column: AI Prompt Info & Customizer Controls */}
         <div className="lg:col-span-5 space-y-4">
-          {/* AI Image Generation & Video Snapshot Actions */}
-          <div className="p-4 border-2 border-black bg-[#FFDE59] shadow-[3px_3px_0px_0px_#000] space-y-3">
-            <p className="text-xs font-mono font-black uppercase text-black">⚡ THUMBNAIL BACKGROUND SOURCES</p>
-            <div className="grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                onClick={handleAiGenerateImage}
-                disabled={isAiGeneratingImage}
-                className="creator-button-primary text-xs justify-center py-2 bg-white"
-              >
-                {isAiGeneratingImage ? <Loader2 className="w-4 h-4 animate-spin stroke-[3]" /> : <Sparkles className="w-4 h-4 stroke-[3]" />}
-                <span>{isAiGeneratingImage ? 'GENERATING AI IMAGE...' : '⚡ AI GENERATE BACKGROUND IMAGE'}</span>
-              </button>
-
+          {/* AI Image Generation Status */}
+          <div className="p-4 border-2 border-black bg-[#FFDE59] shadow-[3px_3px_0px_0px_#000] space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-mono font-black uppercase text-black">🤖 AI VISUAL SCENE CONCEPT</p>
+              <span className="text-[10px] font-mono font-black bg-white px-1.5 py-0.5 border border-black uppercase">AUTO GENERATED</span>
+            </div>
+            <p className="text-xs font-bold text-black italic">
+              "{aiImagePrompt || `Cinematic visual scene analyzing subject: ${campaignName || 'Viral Content'}`}"
+            </p>
+            <div className="flex items-center gap-2 pt-1">
               {sourceUrl && sourceUrl.startsWith('http') && (
                 <button
                   type="button"
                   onClick={handleCaptureVideoSnapshot}
-                  className="creator-button-secondary text-xs justify-center py-2 bg-white"
+                  className="creator-button-secondary text-[11px] py-1 px-2 bg-white"
                 >
-                  <Camera className="w-4 h-4 stroke-[3]" />
-                  <span>📸 CAPTURE VIDEO SNAPSHOT FRAME</span>
+                  <Camera className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>📸 USE VIDEO SNAPSHOT FRAME</span>
                 </button>
               )}
-
-              <label className="creator-button-secondary cursor-pointer text-xs justify-center py-2 bg-white border-2 border-black flex items-center gap-2 font-mono font-black">
-                <Upload className="w-4 h-4 stroke-[3]" />
-                <span>UPLOAD CUSTOM BACKGROUND IMAGE</span>
+              <label className="creator-button-secondary cursor-pointer text-[11px] py-1 px-2 bg-white border border-black flex items-center gap-1 font-mono font-black">
+                <Upload className="w-3.5 h-3.5 stroke-[3]" />
+                <span>UPLOAD IMAGE</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -192,45 +179,13 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
                   className="hidden"
                 />
               </label>
-
-              {bgImage && (
-                <button
-                  type="button"
-                  onClick={() => setBgImage(undefined)}
-                  className="text-[10px] font-mono font-black text-black underline text-right pt-1"
-                >
-                  REMOVE BACKGROUND IMAGE (USE SOLID COLOR)
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-mono font-black uppercase text-black">Preset AI Concepts:</label>
-            <div className="space-y-2">
-              {concepts.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => handleSelectConcept(c)}
-                  style={{ backgroundColor: c.themeColor }}
-                  className={cn(
-                    'w-full text-left p-3 border-2 border-black font-mono shadow-[2.5px_2.5px_0px_0px_#000] transition-all',
-                    selectedConcept.id === c.id ? 'ring-3 ring-black shadow-[4px_4px_0px_0px_#000]' : 'hover:translate-x-0.5'
-                  )}
-                >
-                  <p className="text-[10px] font-black uppercase text-black bg-white px-1.5 py-0.5 border border-black inline-block mb-1">
-                    {c.badgeText}
-                  </p>
-                  <p className="text-xs font-black text-black truncate">{c.title}</p>
-                </button>
-              ))}
             </div>
           </div>
 
           {/* Controls Form */}
           <div className="space-y-3 p-4 border-2 border-black bg-[#F4F4F0] shadow-[3px_3px_0px_0px_#000]">
             <div className="space-y-1">
-              <label className="text-[11px] font-mono font-black uppercase text-black">HEADLINE TITLE</label>
+              <label className="text-[11px] font-mono font-black uppercase text-black">AI HEADLINE TITLE</label>
               <input
                 type="text"
                 value={title}
@@ -240,7 +195,7 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-mono font-black uppercase text-black">SUBTITLE CAPTION</label>
+              <label className="text-[11px] font-mono font-black uppercase text-black">AI SUBTITLE HOOK</label>
               <input
                 type="text"
                 value={subtitle}
@@ -251,7 +206,7 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono font-black uppercase text-black">BADGE TEXT</label>
+                <label className="text-[11px] font-mono font-black uppercase text-black">VIRAL BADGE</label>
                 <input
                   type="text"
                   value={badgeText}
@@ -299,18 +254,25 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
           </div>
         </div>
 
-        {/* Right Column: Live Canvas Preview */}
+        {/* Right Column: Live AI Generated Canvas Preview */}
         <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-black uppercase text-black">LIVE THUMBNAIL CANVAS PREVIEW</span>
+              <span className="text-xs font-mono font-black uppercase text-black">AI GENERATED VISUAL THUMBNAIL</span>
               <span className="text-[10px] font-mono font-black uppercase bg-[#00E5FF] px-2 py-0.5 border border-black">
                 {aspectRatio === '16:9' ? '16:9 YouTube / LinkedIn' : '9:16 Reels / Shorts'}
               </span>
             </div>
 
             {/* Canvas Box */}
-            <div className="flex justify-center bg-[#F4F4F0] border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000]">
+            <div className="flex justify-center bg-[#F4F4F0] border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000] relative">
+              {isAiLoading && (
+                <div className="absolute inset-0 bg-white/90 z-30 flex items-center justify-center font-mono font-black text-xs text-black gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin stroke-[3]" />
+                  <span>AI GENERATING VISUAL THUMBNAIL IMAGE...</span>
+                </div>
+              )}
+
               <div
                 style={{
                   backgroundColor: themeColor,
@@ -324,7 +286,7 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
                 )}
               >
                 {/* Background Dimmer overlay when background image is present */}
-                {bgImage && <div className="absolute inset-0 bg-black/30 pointer-events-none" />}
+                {bgImage && <div className="absolute inset-0 bg-black/35 pointer-events-none" />}
 
                 {/* Decorative Hatch Stripes Background when no image */}
                 {!bgImage && <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_2px,transparent_2px)] [background-size:16px_16px] pointer-events-none" />}
@@ -351,7 +313,7 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
                 </div>
 
                 {/* Bottom Branding Tag */}
-                <div className="z-10 flex items-center justify-between border-t-2 border-black pt-2 bg-white/90 p-1 border">
+                <div className="z-10 flex items-center justify-between border-t-2 border-black pt-2 bg-white/95 p-1 border">
                   <span className="text-[10px] font-mono font-black uppercase text-black">
                     POWERED BY CREATOROS
                   </span>
@@ -368,10 +330,10 @@ export function ThumbnailCreator({ campaignName, sourceUrl, onAttach }: Thumbnai
             <button
               onClick={handleAttachClick}
               disabled={isAttached}
-              className="creator-button-primary text-xs py-2.5 px-6"
+              className="creator-button-primary text-xs py-2.5 px-6 shadow-[3px_3px_0px_0px_#000]"
             >
               {isAttached ? <Check className="w-4 h-4 stroke-[3]" /> : <ImageIcon className="w-4 h-4 stroke-[3]" />}
-              <span>{isAttached ? 'THUMBNAIL ATTACHED!' : 'ATTACH TO POSTIZ CAMPAIGN'}</span>
+              <span>{isAttached ? 'THUMBNAIL ATTACHED!' : 'ATTACH AI THUMBNAIL TO CAMPAIGN'}</span>
             </button>
           </div>
         </div>
