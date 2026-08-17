@@ -36,6 +36,7 @@ export default function CreateCampaignPage() {
   const [liUrn, setLiUrn] = useState('')
   const [igAccountId, setIgAccountId] = useState('')
   const [igToken, setIgToken] = useState('')
+  const [publishMode, setPublishMode] = useState<'now' | 'schedule'>('now')
 
   // Step 1: Upload handler
   const handleUploadSubmit = async (fileToUpload?: File | null, topicText?: string) => {
@@ -143,7 +144,7 @@ export default function CreateCampaignPage() {
           campaignId: campaignData?.campaignId || 'cmp_demo',
           platform: approvedPost.platform,
           content: fullText,
-          scheduledAt: new Date(Date.now() + 86400000).toISOString(),
+          scheduledAt: publishMode === 'now' ? new Date().toISOString() : new Date(Date.now() + 86400000).toISOString(),
           blueskyHandle: bskyHandle,
           blueskyPassword: bskyPassword,
           linkedinToken: liToken,
@@ -477,14 +478,42 @@ export default function CreateCampaignPage() {
                 </div>
               )}
 
+              {/* Real-Time vs Scheduled Publishing Mode Selector */}
+              <div className="flex border-3 border-black bg-white shadow-[4px_4px_0px_0px_#000]">
+                <button
+                  type="button"
+                  onClick={() => setPublishMode('now')}
+                  className={`flex-1 py-2.5 text-xs font-mono font-black uppercase transition-colors ${
+                    publishMode === 'now' ? 'bg-[#A3E635] text-black border-r-3 border-black' : 'bg-white text-black/70 hover:bg-[#F4F4F0]'
+                  }`}
+                >
+                  ⚡ PUBLISH NOW (REAL-TIME)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPublishMode('schedule')}
+                  className={`flex-1 py-2.5 text-xs font-mono font-black uppercase transition-colors ${
+                    publishMode === 'schedule' ? 'bg-[#FFDE59] text-black border-l-3 border-black' : 'bg-white text-black/70 hover:bg-[#F4F4F0]'
+                  }`}
+                >
+                  📅 SCHEDULE FOR LATER
+                </button>
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={handleScheduleSubmit}
                   disabled={isScheduling}
-                  className="creator-button-primary text-xs"
+                  className="creator-button-primary text-xs py-3 px-6"
                 >
                   {isScheduling ? <Loader2 className="w-4 h-4 animate-spin stroke-[3]" /> : <Send className="w-4 h-4 stroke-[3]" />}
-                  <span>{isScheduling ? 'PUBLISHING LIVE...' : bskyHandle && bskyPassword ? 'PUBLISH LIVE TO BLUESKY' : 'SCHEDULE CAMPAIGN'}</span>
+                  <span>
+                    {isScheduling
+                      ? 'DISPATCHING LIVE...'
+                      : publishMode === 'now'
+                      ? '⚡ PUBLISH LIVE NOW IN REAL TIME'
+                      : 'SCHEDULE CAMPAIGN'}
+                  </span>
                 </button>
               </div>
             </div>
