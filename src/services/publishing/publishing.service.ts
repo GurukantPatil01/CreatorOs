@@ -79,13 +79,14 @@ export class PublishingService {
     publishedUrl?: string
   }> {
     const ownerId = req.userId || 'demo_user'
+    const savedCreds = store.getUserCredentials(ownerId)
     let postResult: PostResult | null = null
 
     const platformLower = req.platform.toLowerCase()
 
     // 1. Direct Bluesky ATProto Live Publishing
-    const bskyHandle = req.blueskyHandle || process.env.BLUESKY_HANDLE
-    const bskyPassword = req.blueskyPassword || process.env.BLUESKY_APP_PASSWORD
+    const bskyHandle = req.blueskyHandle || savedCreds?.blueskyHandle || process.env.BLUESKY_HANDLE
+    const bskyPassword = req.blueskyPassword || savedCreds?.blueskyPassword || process.env.BLUESKY_APP_PASSWORD
 
     if (platformLower === 'bluesky' && bskyHandle && bskyPassword) {
       const bskyRes = await this.blueskyProvider.publishPost(bskyHandle, bskyPassword, req.content)
@@ -104,8 +105,8 @@ export class PublishingService {
     }
 
     // 2. Direct LinkedIn v2 API Live Publishing
-    const liToken = req.linkedinToken || process.env.LINKEDIN_ACCESS_TOKEN
-    const liUrn = req.linkedinUrn || process.env.LINKEDIN_PERSON_URN
+    const liToken = req.linkedinToken || savedCreds?.linkedinToken || process.env.LINKEDIN_ACCESS_TOKEN
+    const liUrn = req.linkedinUrn || savedCreds?.linkedinUrn || process.env.LINKEDIN_PERSON_URN
 
     if (platformLower === 'linkedin' && liToken && liUrn) {
       const liRes = await this.linkedinProvider.publishPost(liToken, liUrn, req.content)
@@ -124,8 +125,8 @@ export class PublishingService {
     }
 
     // 3. Direct Instagram Graph API Live Publishing
-    const igAccountId = req.instagramAccountId || process.env.INSTAGRAM_ACCOUNT_ID
-    const igToken = req.instagramToken || process.env.INSTAGRAM_ACCESS_TOKEN
+    const igAccountId = req.instagramAccountId || savedCreds?.instagramAccountId || process.env.INSTAGRAM_ACCOUNT_ID
+    const igToken = req.instagramToken || savedCreds?.instagramToken || process.env.INSTAGRAM_ACCESS_TOKEN
 
     if (platformLower === 'instagram' && igAccountId && igToken) {
       const igRes = await this.instagramProvider.publishPost(igAccountId, igToken, req.content, req.imageUrl)

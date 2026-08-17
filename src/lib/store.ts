@@ -12,12 +12,23 @@ export interface ExtendedScheduledPost extends ScheduledPost {
   user_id?: string | null
 }
 
+export interface UserSocialCredentials {
+  userId: string
+  blueskyHandle?: string
+  blueskyPassword?: string
+  linkedinToken?: string
+  linkedinUrn?: string
+  instagramAccountId?: string
+  instagramToken?: string
+}
+
 // Global server singleton store with multi-account isolation
 class CampaignStore {
   private static instance: CampaignStore
   private campaigns: Map<string, ExtendedCampaign> = new Map()
   private scheduledPosts: Map<string, ExtendedScheduledPost> = new Map()
   private workflowNodes: Map<string, WorkflowNode[]> = new Map() // campaignId -> nodes
+  private userCredentials: Map<string, UserSocialCredentials> = new Map() // userId -> credentials
 
   private constructor() {
     // Seed default demo campaign for demo user
@@ -68,6 +79,16 @@ class CampaignStore {
       globalThis._creatorOsStore = new CampaignStore()
     }
     return globalThis._creatorOsStore
+  }
+
+  // User Social Credentials
+  public setUserCredentials(creds: UserSocialCredentials): void {
+    const existing = this.userCredentials.get(creds.userId) || { userId: creds.userId }
+    this.userCredentials.set(creds.userId, { ...existing, ...creds })
+  }
+
+  public getUserCredentials(userId: string): UserSocialCredentials | null {
+    return this.userCredentials.get(userId) || null
   }
 
   // Save or update campaign scoped to user

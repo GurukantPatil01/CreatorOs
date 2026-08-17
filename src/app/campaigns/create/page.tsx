@@ -406,77 +406,16 @@ export default function CreateCampaignPage() {
                 <p className="text-sm text-black font-black uppercase">☑ {approvedPost?.platform || 'Bluesky'}</p>
               </div>
 
-              {/* Direct Bluesky Live Credentials */}
-              {(approvedPost?.platform?.toLowerCase() === 'bluesky' || !approvedPost?.platform) && (
-                <div className="p-4 border-3 border-black bg-[#FFDE59] shadow-[4px_4px_0px_0px_#000] space-y-3">
-                  <p className="text-xs font-mono font-black uppercase text-black">⚡ PUBLISH DIRECT LIVE TO BLUESKY (OPTIONAL)</p>
-                  <p className="text-[11px] font-bold text-black">Enter your Bluesky Handle & App Password below to post a <b>REAL LIVE POST</b> to Bluesky immediately, or click Schedule to queue via Postiz.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      value={bskyHandle}
-                      onChange={(e) => setBskyHandle(e.target.value)}
-                      placeholder="yourhandle.bsky.social"
-                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
-                    />
-                    <input
-                      type="password"
-                      value={bskyPassword}
-                      onChange={(e) => setBskyPassword(e.target.value)}
-                      placeholder="Bluesky App Password"
-                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
-                    />
-                  </div>
+              {/* Account Integration Status */}
+              <div className="p-4 border-3 border-black bg-[#A3E635] shadow-[4px_4px_0px_0px_#000] space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-mono font-black uppercase text-black">✓ ACCOUNT PLATFORM INTEGRATION</p>
+                  <a href="/settings" target="_blank" className="text-[10px] font-mono font-black uppercase underline text-black">MANAGE INTEGRATIONS IN SETTINGS ↗</a>
                 </div>
-              )}
-
-              {/* Direct LinkedIn Live Credentials */}
-              {approvedPost?.platform?.toLowerCase() === 'linkedin' && (
-                <div className="p-4 border-3 border-black bg-[#00E5FF] shadow-[4px_4px_0px_0px_#000] space-y-3">
-                  <p className="text-xs font-mono font-black uppercase text-black">💼 PUBLISH DIRECT LIVE TO LINKEDIN (OPTIONAL)</p>
-                  <p className="text-[11px] font-bold text-black">Enter your LinkedIn Access Token & Person URN below to publish a <b>REAL LIVE POST</b> directly to your LinkedIn feed.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input
-                      type="password"
-                      value={liToken}
-                      onChange={(e) => setLiToken(e.target.value)}
-                      placeholder="LinkedIn Access Token (OAuth2)"
-                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
-                    />
-                    <input
-                      type="text"
-                      value={liUrn}
-                      onChange={(e) => setLiUrn(e.target.value)}
-                      placeholder="LinkedIn Person URN (e.g. 123456789)"
-                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Direct Instagram Live Credentials */}
-              {approvedPost?.platform?.toLowerCase() === 'instagram' && (
-                <div className="p-4 border-3 border-black bg-[#FF90E8] shadow-[4px_4px_0px_0px_#000] space-y-3">
-                  <p className="text-xs font-mono font-black uppercase text-black">📸 PUBLISH DIRECT LIVE TO INSTAGRAM (OPTIONAL)</p>
-                  <p className="text-[11px] font-bold text-black">Enter your Instagram Business Account ID & Graph API Access Token below to publish a <b>REAL LIVE REEL/POST</b> to Instagram.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      value={igAccountId}
-                      onChange={(e) => setIgAccountId(e.target.value)}
-                      placeholder="Instagram Business Account ID"
-                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
-                    />
-                    <input
-                      type="password"
-                      value={igToken}
-                      onChange={(e) => setIgToken(e.target.value)}
-                      placeholder="Graph API Access Token"
-                      className="bg-white border-2 border-black p-2 text-xs font-bold text-black placeholder:text-black/50 shadow-[2px_2px_0px_0px_#000]"
-                    />
-                  </div>
-                </div>
-              )}
+                <p className="text-xs font-bold text-black">
+                  Dispatched using your saved social network credentials for <b>{approvedPost?.platform || 'Bluesky'}</b>.
+                </p>
+              </div>
 
               {/* Real-Time vs Scheduled Publishing Mode Selector */}
               <div className="flex border-3 border-black bg-white shadow-[4px_4px_0px_0px_#000]">
