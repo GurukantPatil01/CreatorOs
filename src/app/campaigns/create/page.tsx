@@ -37,6 +37,11 @@ export default function CreateCampaignPage() {
   const [igAccountId, setIgAccountId] = useState('')
   const [igToken, setIgToken] = useState('')
   const [publishMode, setPublishMode] = useState<'now' | 'schedule'>('now')
+  const [customScheduleTime, setCustomScheduleTime] = useState<string>(() => {
+    const tomorrow = new Date(Date.now() + 86400000)
+    tomorrow.setMinutes(tomorrow.getMinutes() - tomorrow.getTimezoneOffset())
+    return tomorrow.toISOString().slice(0, 16)
+  })
 
   // Step 1: Upload handler
   const handleUploadSubmit = async (fileToUpload?: File | null, topicText?: string) => {
@@ -144,7 +149,7 @@ export default function CreateCampaignPage() {
           campaignId: campaignData?.campaignId || 'cmp_demo',
           platform: approvedPost.platform,
           content: fullText,
-          scheduledAt: publishMode === 'now' ? new Date().toISOString() : new Date(Date.now() + 86400000).toISOString(),
+          scheduledAt: publishMode === 'now' ? new Date().toISOString() : (customScheduleTime ? new Date(customScheduleTime).toISOString() : new Date(Date.now() + 86400000).toISOString()),
           blueskyHandle: bskyHandle,
           blueskyPassword: bskyPassword,
           linkedinToken: liToken,
@@ -438,6 +443,22 @@ export default function CreateCampaignPage() {
                   📅 SCHEDULE FOR LATER
                 </button>
               </div>
+
+              {/* Custom Date & Time Picker */}
+              {publishMode === 'schedule' && (
+                <div className="p-4 border-3 border-black bg-[#FFDE59] shadow-[4px_4px_0px_0px_#000] space-y-2">
+                  <label className="text-xs font-mono font-black uppercase text-black block">📅 SELECT PUBLISHING DATE & TIME</label>
+                  <input
+                    type="datetime-local"
+                    value={customScheduleTime}
+                    onChange={(e) => setCustomScheduleTime(e.target.value)}
+                    className="bg-white border-2 border-black p-2.5 text-xs font-mono font-black text-black shadow-[2px_2px_0px_0px_#000] w-full focus:outline-none"
+                  />
+                  <p className="text-[11px] font-bold text-black/80">
+                    Selected schedule time: <b>{customScheduleTime ? new Date(customScheduleTime).toLocaleString() : 'Tomorrow'}</b>
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
